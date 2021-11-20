@@ -1,0 +1,31 @@
+version: '3.1'
+
+services:
+  mysqldb:
+    image: mysql
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ${RESTAURANTFINDER_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${RESTAURANTFINDER_DB_NAME}
+      MYSQL_USER: ${RF_MYSQL_USER}
+      MYSQL_PASSWORD: ${RF_MYSQL_PASSWORD}
+    volumes:
+      - restaurantfinder_mysqldb_volume:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8081:80
+    environment:
+      PMA_HOST: mysqldb
+      PMA_USER: ${RF_MYSQL_USER}
+      PMA_PASSWORD: ${RF_MYSQL_PASSWORD}
+    depends_on:
+      - mysqldb
+
+volumes:
+  restaurantfinder_mysqldb_volume:
+    driver: local
