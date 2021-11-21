@@ -46,8 +46,7 @@ const convertJSON = (data) => {
                     grade,
                     score,
                 } = gradeRecord;
-                sql = idx < maxIndex ? `${PREFIX}'${gradeDate}', '${grade}', ${score}, '${restaurantId}'${SUFFIX}\n` :
-                `${PREFIX}'${gradeDate}', '${grade}', ${score}, '${restaurantId}'${SUFFIX}`;
+                sql = `${PREFIX}'${gradeDate}', '${grade}', ${score}, '${restaurantId}'${SUFFIX}`;
 
                 sqlStatement+= sql;
             });
