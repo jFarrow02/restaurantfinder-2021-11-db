@@ -20,21 +20,13 @@ const transformRestaurantName = (name) => {
 
 const stripChars = (name, separator, locatorChars, joiner) => {
     const nameAsArray = name.split(separator);
-    let transformedArray;
+    let transformedArray = [...nameAsArray];
     let transformedName;
-    nameAsArray.forEach((value) => {
+    nameAsArray.forEach((value, valueIndex) => {
         locatorChars.forEach((char, idx) => {
             if(value.indexOf(char) !== -1){
-                const target = nameAsArray.indexOf(value);
                 transformedName = value.split(char).filter((n) => n !== char).join(joiner);
-                nameAsArray[idx] = transformedName;
-                transformedArray = nameAsArray.filter((n) => n.indexOf(char) === -1);
-                if(name === "Lorenzo & Maria'S") {
-                    console.log(nameAsArray);
-                    console.log(target + ':' + nameAsArray[target]);
-                    console.log(transformedName);
-                    console.log(transformedArray);
-                }
+                transformedArray[valueIndex] = transformedName;
             }
         });
     });
@@ -68,7 +60,6 @@ const convert = async() => {
 
 const convertJSON = async () => {
     const maxIndex = data.length - 1;
-    console.log(maxIndex);
     let text = '';
     data.forEach((restaurant, idx) => {
         const {
