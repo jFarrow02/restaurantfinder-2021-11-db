@@ -12,16 +12,34 @@ const transformRestaurantName = (name) => {
     nameAsArray.forEach((value) => {
         if(value.indexOf(escapedApostrophe) !== -1) {
             transformedName = value.split(escapedApostrophe).filter((n) => n !== escapedApostrophe).join('\\');
-            console.log(transformedName);
         }
     });
     
     return transformedName ? transformedName : name;
 };
 
-const trimStreetName = (name) => {
-    return name.split(' ').filter((streetName) => streetName.trim().length > 0).join(' ');
-}
+const stripChars = (name, separator, locatorChars, joiner) => {
+    const nameAsArray = name.split(separator);
+    let transformedArray;
+    let transformedName;
+    nameAsArray.forEach((value) => {
+        locatorChars.forEach((char, idx) => {
+            if(value.indexOf(char) !== -1){
+                const target = nameAsArray.indexOf(value);
+                transformedName = value.split(char).filter((n) => n !== char).join(joiner);
+                nameAsArray[idx] = transformedName;
+                transformedArray = nameAsArray.filter((n) => n.indexOf(char) === -1);
+                if(name === "Lorenzo & Maria'S") {
+                    console.log(nameAsArray);
+                    console.log(target + ':' + nameAsArray[target]);
+                    console.log(transformedName);
+                    console.log(transformedArray);
+                }
+            }
+        });
+    });
+    return transformedName ? [...transformedArray].join(' ') : name;
+};
 
 const buildSqlStatementFromRestaurantRecord = (data) => {
     const textAsArray = data.split('\n');
@@ -30,10 +48,7 @@ const buildSqlStatementFromRestaurantRecord = (data) => {
     textAsArray.forEach((restaurantRecord, idx) => {
         const recordArray = restaurantRecord.split(',');
         const [ restaurantId, borough, building, cuisine, latitude, longitude, name, street, zip ] = recordArray;
-        const transformedName = transformRestaurantName(name)
-        const trimmedStreet = trimStreetName(street);
-        
-        const sql = `${PREFIX}${restaurantId}, ${borough}, ${building}, ${cuisine}, ${latitude}, ${longitude}, ${transformedName}, ${trimmedStreet}, ${zip}${SUFFIX}`;
+        const sql = `${PREFIX}${restaurantId}, ${borough}, ${building}, ${cuisine}, ${latitude}, ${longitude}, ${name}, ${street}, ${zip}${SUFFIX}`;
         sqlStatement = idx === maxIndex ? sqlStatement + sql : sqlStatement + `${sql}\n`;
     });
     
@@ -41,25 +56,8 @@ const buildSqlStatementFromRestaurantRecord = (data) => {
 };
 
 const convert = async() => {
-
-    let sqlStatement = '';
-
     try {
         const text = await readFile('./data/restaurants.csv', { encoding: 'utf-8' });
-        const textAsArray = text.split('\n');
-        const maxIndex = textAsArray.length - 1;
-
-        // textAsArray.forEach((restaurantRecord, idx) => {
-        //     const recordArray = restaurantRecord.split(',');
-        //     const [ restaurantId, borough, building, cuisine, latitude, longitude, name, street, zip ] = recordArray;
-            
-        //     const trimmedStreet = trimStreetName(street);
-            
-        //     const transformedName = transformRestaurantName(name);
-
-        //     const sql = `${PREFIX}${restaurantId}, ${borough}, ${building}, ${cuisine}, ${latitude}, ${longitude}, ${transformedName}, ${trimmedStreet}, ${zip}${SUFFIX}`;
-        //     sqlStatement = idx === maxIndex ? sqlStatement + sql : sqlStatement + `${sql}\n`;
-        // });
         const sqlStatement = buildSqlStatementFromRestaurantRecord(text);
 
         writeFile(`${__dirname}/restaurants.sql`, sqlStatement, { encoding: 'utf-8' });
@@ -69,23 +67,34 @@ const convert = async() => {
 };
 
 const convertJSON = async () => {
-    let sqlStatement = '';
-    const dataAsJSON = JSON.parse(data);
-
-    dataAsJSON.forEach((restaurant, idx) => {
+    const maxIndex = data.length - 1;
+    console.log(maxIndex);
+    let text = '';
+    data.forEach((restaurant, idx) => {
         const {
             restaurant_id: restaurantId,
             address: { building, street, zipcode, coord: [ latitude, longitude]},
-            name,
             cuisine,
             borough,
         } = restaurant;
 
-        const sql = `${PREFIX}${restaurantId}, ${borough}, ${building}, ${cuisine}, ${latitude}, ${longitude}, ${name}, ${street}, ${zipcode}${SUFFIX}`;
-
+        const name = restaurant?.name || 'Name Not Found';
+        const transformedName = stripChars(name, ' ', ["'", '`'], '\\');
+        const transformedBuilding = stripChars(building, ' ', ['\'', '`'], '\\');
+        const transformedStreet = stripChars(street, ' ', ['\'', '`'], '\\').split(' ')
+            .filter(s => s.length > 0).join(' ');
+       
+        text+= idx < maxIndex ? `${restaurantId}, ${borough}, ${transformedBuilding}, ${cuisine.split(',').join('')}, ${latitude}, ${longitude}, ${transformedName}, ${transformedStreet}, ${zipcode}\n` :
+        `${restaurantId}, ${borough}, ${transformedBuilding}, ${cuisine.split(',').join(' ')}, ${latitude}, ${longitude}, ${transformedName}, ${transformedStreet}, ${zipcode}`;
     });
     
-    
+    try {
+        const sqlStatement = buildSqlStatementFromRestaurantRecord(text);
+        writeFile(`${__dirname}/restaurants.sql`, sqlStatement, { encoding: 'utf-8' });
+    } catch(err) {
+        console.log(err);
+    }
 };
 
-convert();
+// convert();
+convertJSON();
