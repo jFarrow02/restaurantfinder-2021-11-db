@@ -2,7 +2,7 @@ const data = require('../../data/restaurants.json');
 const { writeFile } = require('fs/promises');
 
 const getGrades = async (data) => {
-    const gradesArray = [];
+    let gradesArray = [];
     data.forEach(restaurant => {
         const { grades, restaurant_id: restaurantId } = restaurant;
         grades.forEach(g => {
@@ -24,6 +24,7 @@ const getGrades = async (data) => {
         });
     });
 
+    gradesArray = gradesArray.filter(grade => grade.grade !== 'Not Yet Graded' && grade.score !== null);
     try {
         await writeFile(`${__dirname}/grades.json`, JSON.stringify(gradesArray), { encoding: 'utf-8'});
     } catch(err) {
