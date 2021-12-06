@@ -1,0 +1,7 @@
+docker run --name mongoinstance \
+-p 27017:27017 \
+-e MONGO_INITDB_ROOT_USERNAME=rootUser \
+-e MONGO_INITDB_ROOT_PASSWORD=duracell99 \
+-v mongoinstance-volume \
+--net mongoinstance-network \
+-d mongo:latest

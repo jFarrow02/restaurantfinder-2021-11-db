@@ -4,6 +4,15 @@ const { writeFile } = require('fs/promises');
 const getRestaurantsJSON = async (data) => {
     let restaurants = [];
     let cuisineTypes = [];
+    let zipcodes = {};
+    let alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+        'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+    ];
+    let restaurantsByName = {
+        a: [], b: [], c: [], d: [], e: [], f: [], g: [], h: [], i: [], j:[], k: [], l: [],
+        m: [], n: [], o: [], p: [], q: [], r: [], s: [], t: [], u: [], v: [], w: [], x: [],
+        y: [], z: [], special: [],
+    };
 
     data.forEach(restaurant => {
         let record;
@@ -46,8 +55,20 @@ const getRestaurantsJSON = async (data) => {
         }
         restaurants.push(record);
 
+        Object.keys(restaurantsByName).forEach((key) => {
+            if(record.name.substring(0, 1).toLowerCase() === key) {
+                restaurantsByName[key].push(record);
+            } else if(!alphabet.includes(record.name.substring(0, 1).toLowerCase())){
+                restaurantsByName['special'].push(record);
+            }
+        })
+
         if(cuisineTypes.indexOf(cuisine) === -1){
             cuisineTypes.push(cuisine);
+        }
+
+        if(!Object.keys(zipcodes).includes(zipcode)){
+            zipcodes[zipcode] = { zipcode: zipcode };
         }
     });
 
@@ -55,7 +76,7 @@ const getRestaurantsJSON = async (data) => {
             && r.borough && r.cuisine && r.name && r.restaurantId
         );
 
-    cuisineTypes =cuisineTypes.map((c, idx) => { return { cuisineType: c, cuisineId: idx }}).sort((a, b) => {
+    cuisineTypes = cuisineTypes.map((c, idx) => { return { cuisineType: c, cuisineId: idx.toString() }}).sort((a, b) => {
         if(a.cuisineType < b.cuisineType) {
             return -1;
         }
@@ -65,9 +86,16 @@ const getRestaurantsJSON = async (data) => {
         return 0;
     });
 
+    let zipCodesArray = Object.keys(zipcodes).map((zip) => ({zip})).filter(zip => zip.zip !== '');
+
     try {
         await writeFile(`${__dirname}/restaurants.json`, JSON.stringify(restaurants), { encoding: 'utf-8' });
         await writeFile(`${__dirname}/cuisine-types.json`, JSON.stringify(cuisineTypes), { encoding: 'utf-8' });
+        await writeFile(`${__dirname}/restaurants-by-name.json`, JSON.stringify([restaurantsByName]), { encoding: 'utf-8' });
+        await writeFile(`${__dirname}/zipcodes.js`, JSON.stringify(zipCodesArray), { encoding: 'utf-8'});
+        // for(let n in restaurantsByName) {
+        //     await writeFile(`${__dirname}/restaurants-${n}.json`, JSON.stringify(restaurantsByName[n]), { encoding: 'utf-8'});
+        // }
     } catch (err) {
         console.log(err);
     }

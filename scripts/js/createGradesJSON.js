@@ -16,7 +16,7 @@ const getGrades = async (data) => {
             } = g;
             gradeRecord = {
                 gradeDate,
-                grade,
+                grade: grade < 'F' ? grade : 'F',
                 score,
                 restaurantId
             };
