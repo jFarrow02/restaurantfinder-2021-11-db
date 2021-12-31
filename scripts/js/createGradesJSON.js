@@ -3,6 +3,7 @@ const { writeFile } = require('fs/promises');
 
 const getGrades = async (data) => {
     let gradesArray = [];
+    let gradeId = 1;
     data.forEach(restaurant => {
         const { grades, restaurant_id: restaurantId } = restaurant;
         grades.forEach(g => {
@@ -18,9 +19,11 @@ const getGrades = async (data) => {
                 gradeDate,
                 grade: grade < 'F' ? grade : 'F',
                 score,
-                restaurantId
+                restaurantId,
+                gradeId: `${gradeId}`,
             };
             gradesArray.push(gradeRecord);
+            gradeId++;
         });
     });
 

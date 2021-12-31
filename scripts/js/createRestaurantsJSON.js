@@ -1,6 +1,24 @@
 const data = require('../../data/restaurants.json');
 const { writeFile } = require('fs/promises');
 
+const isValidString = (s) => {
+    return s.length > 0;
+};
+
+const isNotNull = (val) => {
+    return val !== null && val !== undefined;
+};
+
+const isValidZipcode = (zip) => {
+
+};
+
+const getRandomIndex = (max, min) => {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min);
+};
+
 const getRestaurantsJSON = async (data) => {
     let restaurants = [];
     let cuisineTypes = [];
@@ -14,6 +32,15 @@ const getRestaurantsJSON = async (data) => {
         y: [], z: [], special: [],
     };
 
+    // Build dummy phone numbers
+    const AREA_CODE = '777';
+    const FIRST_THREE = '555';
+    const PHONE_NUMBERS = [];
+
+    for(let i = 100; i < 200; i++) {
+        PHONE_NUMBERS.push(`${AREA_CODE}.${FIRST_THREE}.0${i}`);
+    };
+
     data.forEach(restaurant => {
         let record;
         const {
@@ -21,8 +48,8 @@ const getRestaurantsJSON = async (data) => {
                 building,
                 street,
                 coord: [
-                    latitude,
                     longitude,
+                    latitude,
                 ],
                 zipcode,
             },
@@ -52,8 +79,22 @@ const getRestaurantsJSON = async (data) => {
             cuisine,
             name: displayName.join(' '),
             restaurantId,
+            phone: PHONE_NUMBERS[getRandomIndex(0, 100)],
         }
-        restaurants.push(record);
+
+        // Filter out null records
+        if(
+            (isNotNull(building) && isValidString(building)) &&
+            (isNotNull(street) && isValidString(street)) &&
+            (isNotNull(latitude)) &&
+            (isNotNull(longitude)) &&
+            (isNotNull(zipcode) && isValidString(zipcode)) &&
+            (isNotNull(borough) && isValidString(borough))
+        )
+        {
+            restaurants.push(record);
+        }
+        
 
         Object.keys(restaurantsByName).forEach((key) => {
             if(record.name.substring(0, 1).toLowerCase() === key) {
